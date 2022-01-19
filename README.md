@@ -13,6 +13,3 @@ minimalistic decentralized blockchain
 /register  -> add your node (IP) to the network
 
 /sync  -> consensus
-
-
-from https://github.com/dvf/blockchain

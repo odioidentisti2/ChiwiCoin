@@ -5,9 +5,13 @@ minimalistic decentralized blockchain
 
 
 /  -> blockchain
+
 /transaction  -> new transaction
+
 /mine  ->  block
+
 /register  -> add your node (IP) to the network
+
 /sync  -> consensus
 
 

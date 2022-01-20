@@ -7,7 +7,7 @@ import requests  # to get responses via http
 from flask import Flask, request, render_template
 
 
-PORT = 5000
+PORT = 8080
 
 
 class BlockChain:
@@ -43,10 +43,9 @@ class BlockChain:
         return tx
 
     def new_block(self):
-        print(f"VALIDATING BLOCK\n> Transactions: {self.pending_txs}")
         last_block = self.last_block()
         last_hash = _hash(last_block)
-        proof = proof_of_work(last_block['proof'], last_hash, verbose=True)
+        proof = proof_of_work(last_block['proof'], verbose=True)
         block = {'index': len(self.chain),
                  'time': ctime(),
                  'transactions': self.pending_txs,
@@ -57,13 +56,13 @@ class BlockChain:
         self.pending_txs = []
         return block
 
-    def validate(self):
+    def validate(self, chain):
         prev_hash = _hash(self.genesis_block)
         prev_proof = self.genesis_block['proof']
-        for block in self.chain:
+        for block in chain:
             # pow = valid_pow(prev_proof, block['proof'], prev_hash)
             if block['prev_hash'] != prev_hash or\
-                    not valid_pow(prev_proof, block['proof'], prev_hash):
+                    not valid_pow(prev_proof, block['proof']):
                 return False
             prev_hash = _hash(block)
             prev_proof = block['proof']
@@ -81,7 +80,7 @@ class BlockChain:
             resp = requests.get(f'http://{node}/')
             if resp.status_code == 200:
                 chain = resp.json()['chain']
-                if len(chain) > len(longest):
+                if len(chain) > len(longest) and self.validate(chain):
                     longest = chain
         if longest != self.chain:
             self.chain = longest
@@ -93,18 +92,18 @@ def _hash(block):
     return sha256(block_string).hexdigest()  # hashing
 
 
-def proof_of_work(last_proof, last_hash, verbose=False):  # why last hash?
+def proof_of_work(last_proof, verbose=False):
     if verbose: print("\tMining...")
     proof = 0
-    while not valid_pow(last_proof, proof, last_hash, verbose=verbose):
+    while not valid_pow(last_proof, proof, verbose=verbose):
         proof += 1
     return proof
 
 
-def valid_pow(prev_proof, proof, prev_hash, verbose=False):
-    zeroes = 4
-    guess_hash = sha256(f"{prev_proof}{proof}{prev_hash}".encode()).hexdigest()
-    # print(f"\t{guess_hash}")
+def valid_pow(prev_proof, proof, verbose=False):
+    zeroes = 3
+    guess_hash = sha256(f"{prev_proof}{proof}".encode()).hexdigest()
+    print(f"\t{guess_hash}")
     if guess_hash[:zeroes] == "0" * zeroes:
         if verbose:
             # print(f"\n\tprev_proof = {prev_proof} _ prev_hash = {prev_hash}")
@@ -133,7 +132,6 @@ bc = BlockChain()
 # bc2.new_block()
 # bc.new_node('127.0.0.1')
 
-
 # FLASK:  return dict  =>  jsonified automatically (+ pretty-print if debug=True)
 
 @app.route('/')
@@ -154,6 +152,7 @@ def add_tx():
     new_tx = bc.new_tx(request.form['from'],
                        request.form['to'],
                        request.form['amount'])
+    print(f'New transaction added: {new_tx}')
     return {'_README': 'New transaction added to the que',
             'tx': new_tx,
             'pending_transactions': len(bc.pending_txs)}
@@ -161,6 +160,7 @@ def add_tx():
 
 @app.route('/mine')
 def mine():
+    print(f"VALIDATING BLOCK\n> Transactions: {bc.pending_txs}")
     new_block = bc.new_block()
     return {'README': "Mined new block",
             'block': new_block,
@@ -171,6 +171,7 @@ def mine():
 def add_node():
     address = f'{request.remote_addr}:{PORT}'
     bc.add_node(address)
+    print(f'New node registered: {address}')
     return {'_README': 'Your node (IP) has been added to the network',
             'node': address,
             'total_nodes': len(bc.nodes) + 1
@@ -181,6 +182,7 @@ def add_node():
 def sync():
     is_updated = bc.update()
     if is_updated:
+        print(f'Local blockchain has been overruled by network!\n{bc.chain}')
         return {'msg': 'Blockchain UPDATED!',
                 'length': len(bc.chain)
                 }

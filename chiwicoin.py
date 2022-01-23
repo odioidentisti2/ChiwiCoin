@@ -1,9 +1,8 @@
+from time import ctime
 from hashlib import sha256
 import json
-from urllib.parse import urlparse
-from time import ctime
 
-import requests  # to get responses via http
+import requests
 from flask import Flask, request, render_template
 
 
@@ -70,9 +69,6 @@ class BlockChain:
 
     def add_node(self, address):
         self.nodes.add(address)
-        # if url := urlparse(address).path:
-        #     self.nodes.add(url)
-        #     return True\
 
     def update(self):
         longest = self.chain
@@ -103,10 +99,9 @@ def proof_of_work(last_proof, verbose=False):
 def valid_pow(prev_proof, proof, verbose=False):
     zeroes = 3
     guess_hash = sha256(f"{prev_proof}{proof}".encode()).hexdigest()
-    print(f"\t{guess_hash}")
+    if verbose: print(f"\t{guess_hash}")
     if guess_hash[:zeroes] == "0" * zeroes:
         if verbose:
-            # print(f"\n\tprev_proof = {prev_proof} _ prev_hash = {prev_hash}")
             print(f"\t*** MINED: {guess_hash} ( proof = {proof} )\n")
         return guess_hash
 

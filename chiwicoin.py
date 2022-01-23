@@ -7,7 +7,7 @@ import requests  # to get responses via http
 from flask import Flask, request, render_template
 
 
-PORT = 8080
+PORT = 5000
 
 
 class BlockChain:
@@ -17,7 +17,7 @@ class BlockChain:
                      }
 
     def __init__(self):
-        self.nodes = set()
+        self.nodes = [] # set()
         self.chain = []
         self.pending_txs = []
 
@@ -112,33 +112,16 @@ def valid_pow(prev_proof, proof, verbose=False):
 
 
 app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 bc = BlockChain()
-# bc.new_tx('Foo', 'Bar', 10)
-# bc.new_block()
-# bc.new_tx('Bar', 'Foo', 10)
-# bc.new_block()
-# print(bc)
-# print("\nVALIDATION: {}\n".format(bc.validate()))
 
-# bc.chain[0]['transactions'][0]['amount'] = 100  # CHEATING
-# print(bc)
-# print("\nVALIDATION: {}\n\n".format(bc.validate()))
-## now = time.time()
-## time.ctime(now)
-
-# bc.nodes.add('127.0.0.1:5000')
-# bc2 = BlockChain()
-# bc2.new_block()
-# bc.new_node('127.0.0.1')
-
-# FLASK:  return dict  =>  jsonified automatically (+ pretty-print if debug=True)
 
 @app.route('/')
 def chain():
     return {'_README': 'Blockchain',
             'chain': bc.chain,
-            'pending_tx': bc.pending_txs
+            'pending_tx': bc.pending_txs,
             }
 
 
@@ -193,4 +176,4 @@ def sync():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=PORT)  # host='127.0.0.1')  # 0.0.0.0 to be visible from externally as well
+    app.run(host='0.0.0.0', port=PORT)

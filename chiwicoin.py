@@ -16,7 +16,7 @@ class BlockChain:
                      }
 
     def __init__(self):
-        self.nodes = [] # set()
+        self.nodes = set()
         self.chain = []
         self.pending_txs = []
 

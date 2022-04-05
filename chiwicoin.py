@@ -8,6 +8,8 @@ from flask import Flask, request, render_template
 
 PORT = 5000
 
+prova=10
+
 
 class BlockChain:
 
